@@ -2,11 +2,13 @@
   {
     "nickname": "낸드",
     "tier": "신튜렁",
-    "mt": 100
+    "ranking_mt": 200,
+    "personal_mt": 150
   },
   {
     "nickname": "너정쩔",
     "tier": "신튜렁",
-    "mt": 100
+    "ranking_mt": 1000,
+    "personal_mt": 100
   }
 ]

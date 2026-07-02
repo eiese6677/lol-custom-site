@@ -243,17 +243,16 @@
           mtChangeInput.value = '0';
         })
         .catch(error => {
-          console.error('Failed to update MT:', error);
-          alert('MT 업데이트 중 오류가 발생했습니다.');
+          console.error('Failed to update personal MT:', error);
+          alert('개인 MT 업데이트 중 오류가 발생했습니다.');
         });
     }
 
     async function updatePlayerMT(nickname, mtChange) {
       try {
         const players = await fetch('/api/players').then(r => r.json());
-        let playerIndex = players.findIndex(p => p.nickname === nickname);
+        const playerIndex = players.findIndex(p => p.nickname === nickname);
 
-        // If player not found, create a new one with MT 0
         if (playerIndex === -1) {
           const createResponse = await fetch('/api/players', {
             method: 'POST',
@@ -263,7 +262,8 @@
             body: JSON.stringify({
               nickname: nickname,
               tier: '신튜렁',
-              mt: mtChange
+              ranking_mt: 0,
+              personal_mt: mtChange
             })
           });
 
@@ -274,16 +274,17 @@
           return;
         }
 
-        // Update existing player
+        const player = players[playerIndex];
         const response = await fetch(`/api/players/${playerIndex}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            nickname: players[playerIndex].nickname,
-            tier: players[playerIndex].tier,
-            mt: players[playerIndex].mt + mtChange
+            nickname: player.nickname,
+            tier: player.tier,
+            ranking_mt: player.ranking_mt ?? 0,
+            personal_mt: (player.personal_mt ?? 0) + mtChange
           })
         });
 

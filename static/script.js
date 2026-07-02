@@ -1,6 +1,18 @@
 let players = [];
 let currentEditIndex = -1;
 
+function getRankingMt(player) {
+  return typeof player.ranking_mt === 'number' ? player.ranking_mt : (typeof player.mt === 'number' ? player.mt : 0);
+}
+
+function getPersonalMt(player) {
+  return typeof player.personal_mt === 'number' ? player.personal_mt : 0;
+}
+
+function getTotalMt(player) {
+  return getRankingMt(player) + getPersonalMt(player);
+}
+
 /**
  * Fetch all players from the API
  */
@@ -27,7 +39,7 @@ function renderRanking() {
   if (!table) return;
   
   table.innerHTML = '';
-  const sortedPlayers = [...players].sort((a, b) => b.mt - a.mt);
+  const sortedPlayers = [...players].sort((a, b) => getTotalMt(b) - getTotalMt(a));
 
   sortedPlayers.forEach((player, index) => {
     const rank = index + 1;
@@ -36,7 +48,7 @@ function renderRanking() {
         <td>${rank}</td>
         <td>${escapeHtml(player.nickname)}</td>
         <td>${escapeHtml(player.tier)}</td>
-        <td>${player.mt}</td>
+        <td>${getTotalMt(player)}</td>
       </tr>
     `;
     table.innerHTML += row;
@@ -51,7 +63,7 @@ function renderManage() {
   if (!table) return;
   
   table.innerHTML = '';
-  const sortedPlayers = [...players].sort((a, b) => b.mt - a.mt);
+  const sortedPlayers = [...players].sort((a, b) => getTotalMt(b) - getTotalMt(a));
   const originalIndices = sortedPlayers.map(p => players.indexOf(p));
 
   sortedPlayers.forEach((player, sortedIndex) => {
@@ -60,7 +72,8 @@ function renderManage() {
       <tr>
         <td>${escapeHtml(player.nickname)}</td>
         <td>${escapeHtml(player.tier)}</td>
-        <td>${player.mt}</td>
+        <td>${getRankingMt(player)}</td>
+        <td>${getPersonalMt(player)}</td>
         <td>
           <button class="action-btn" onclick="editPlayer(${originalIndex})">수정</button>
           <button class="action-btn delete-btn" onclick="deletePlayer(${originalIndex})">삭제</button>
@@ -77,15 +90,11 @@ function renderManage() {
 async function addPlayer() {
   const nickname = document.getElementById('nickname').value.trim();
   const tier = document.getElementById('tier').value.trim();
-  const mt = Number(document.getElementById('mt').value);
+  const rankingMt = Number(document.getElementById('rankingMt').value) || 0;
+  const personalMt = Number(document.getElementById('personalMt').value) || 0;
   
   if (!nickname) {
     alert('닉네임을 입력해주세요');
-    return;
-  }
-  
-  if (!mt || mt <= 0) {
-    alert('MT 포인트를 올바르게 입력해주세요');
     return;
   }
   
@@ -93,7 +102,7 @@ async function addPlayer() {
     const res = await fetch('/api/players', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname, tier, mt })
+      body: JSON.stringify({ nickname, tier, ranking_mt: rankingMt, personal_mt: personalMt })
     });
     
     if (!res.ok) {
@@ -104,7 +113,8 @@ async function addPlayer() {
     
     document.getElementById('nickname').value = '';
     document.getElementById('tier').value = '신튜렁';
-    document.getElementById('mt').value = '';
+    document.getElementById('rankingMt').value = '';
+    document.getElementById('personalMt').value = '';
     
     await fetchPlayers();
   } catch (e) {
@@ -149,7 +159,8 @@ function editPlayer(index) {
   const player = players[index];
   document.getElementById('editNickname').value = player.nickname;
   document.getElementById('editTier').value = player.tier;
-  document.getElementById('editMt').value = player.mt;
+  document.getElementById('editRankingMt').value = getRankingMt(player);
+  document.getElementById('editPersonalMt').value = getPersonalMt(player);
   document.getElementById('editModal').style.display = 'block';
 }
 
@@ -167,15 +178,11 @@ function closeModal() {
 async function saveEdit() {
   const nickname = document.getElementById('editNickname').value.trim();
   const tier = document.getElementById('editTier').value.trim();
-  const mt = Number(document.getElementById('editMt').value);
+  const rankingMt = Number(document.getElementById('editRankingMt').value) || 0;
+  const personalMt = Number(document.getElementById('editPersonalMt').value) || 0;
   
   if (!nickname) {
     alert('닉네임을 입력해주세요');
-    return;
-  }
-  
-  if (!mt || mt <= 0) {
-    alert('MT 포인트를 올바르게 입력해주세요');
     return;
   }
   
@@ -183,7 +190,7 @@ async function saveEdit() {
     const res = await fetch(`/api/players/${currentEditIndex}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname, tier, mt })
+      body: JSON.stringify({ nickname, tier, ranking_mt: rankingMt, personal_mt: personalMt })
     });
     
     if (!res.ok) {

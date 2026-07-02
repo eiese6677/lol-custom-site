@@ -24,7 +24,8 @@
         <option>C</option>
         <option>D</option>
       </select>
-      <input type="number" id="mt" placeholder="MT">
+      <input type="number" id="rankingMt" placeholder="랭킹 MT">
+      <input type="number" id="personalMt" placeholder="개인 MT (내전/1대1)">
       <button class="primary" onclick="addPlayer()">참가자 추가</button>
     </div>
 
@@ -33,7 +34,8 @@
         <tr>
           <th>닉네임</th>
           <th>티어</th>
-          <th>MT</th>
+          <th>랭킹 MT</th>
+          <th>개인 MT</th>
           <th>관리</th>
         </tr>
       </thead>
@@ -54,7 +56,8 @@
         <option>C</option>
         <option>D</option>
       </select>
-      <input type="number" id="editMt" placeholder="MT">
+      <input type="number" id="editRankingMt" placeholder="랭킹 MT">
+      <input type="number" id="editPersonalMt" placeholder="개인 MT (내전/1대1)">
       <button class="primary" onclick="saveEdit()">저장</button>
     </div>
   </div>

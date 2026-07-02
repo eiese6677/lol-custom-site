@@ -18,6 +18,25 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.json')
 DATA_LOCK = threading.Lock()
 
 
+def normalize_player(player):
+    """Normalize player data and support legacy single-MT format."""
+    if not isinstance(player, dict):
+        return player
+
+    ranking_mt = player.get('ranking_mt')
+    if ranking_mt is None:
+        ranking_mt = 0
+
+    personal_mt = player.get('personal_mt')
+    if personal_mt is None:
+        personal_mt = 0
+
+    normalized = dict(player)
+    normalized['ranking_mt'] = int(ranking_mt)
+    normalized['personal_mt'] = int(personal_mt)
+    return normalized
+
+
 def load_config():
     try:
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
@@ -63,7 +82,10 @@ def load_players():
     """Load players from data.json file"""
     try:
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            players = json.load(f)
+        if not isinstance(players, list):
+            return []
+        return [normalize_player(player) for player in players]
     except FileNotFoundError:
         logger.warning(f"Data file not found: {DATA_FILE}")
         return []
@@ -78,10 +100,11 @@ def load_players():
 def save_players(players):
     """Save players to data.json file with thread safety"""
     try:
+        normalized_players = [normalize_player(player) for player in players if isinstance(player, dict)]
         with DATA_LOCK:
             with open(DATA_FILE, 'w', encoding='utf-8') as f:
-                json.dump(players, f, ensure_ascii=False, indent=2)
-                logger.info(f"Saved {len(players)} players to {DATA_FILE}")
+                json.dump(normalized_players, f, ensure_ascii=False, indent=2)
+                logger.info(f"Saved {len(normalized_players)} players to {DATA_FILE}")
     except Exception as e:
         logger.error(f"Error saving players: {e}")
         raise
@@ -150,17 +173,21 @@ def api_add_player():
     data = request.get_json() or {}
     nickname = data.get('nickname', '').strip()
     tier = data.get('tier', '').strip()
-    mt = data.get('mt')
-    
+
     if not nickname:
         return jsonify({'error': 'nickname is required'}), 400
-    if mt is None:
-        return jsonify({'error': 'mt is required'}), 400
-    
+
     try:
-        mt = int(mt)
+        ranking_mt = data.get('ranking_mt', data.get('mt', 0))
+        ranking_mt = int(ranking_mt)
     except (ValueError, TypeError):
-        return jsonify({'error': 'mt must be an integer'}), 400
+        return jsonify({'error': 'ranking_mt must be an integer'}), 400
+
+    try:
+        personal_mt = data.get('personal_mt', 0)
+        personal_mt = int(personal_mt)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'personal_mt must be an integer'}), 400
     
     try:
         players = load_players()
@@ -169,7 +196,8 @@ def api_add_player():
         if any(player['nickname'] == nickname for player in players):
             return jsonify({'error': 'nickname already exists'}), 400
         
-        players.append({'nickname': nickname, 'tier': tier or '신튜렁', 'mt': mt})
+        player = {'nickname': nickname, 'tier': tier or '신튜렁', 'ranking_mt': ranking_mt, 'personal_mt': personal_mt}
+        players.append(normalize_player(player))
         save_players(players)
         logger.info(f"Added player: {nickname}")
         return jsonify(players[-1]), 201
@@ -192,12 +220,23 @@ def api_update_player(index):
             players[index]['nickname'] = data['nickname'].strip()
         if 'tier' in data:
             players[index]['tier'] = data['tier'].strip()
-        if 'mt' in data:
+        if 'ranking_mt' in data:
             try:
-                players[index]['mt'] = int(data['mt'])
+                players[index]['ranking_mt'] = int(data['ranking_mt'])
+            except (ValueError, TypeError):
+                return jsonify({'error': 'ranking_mt must be an integer'}), 400
+        elif 'mt' in data:
+            try:
+                players[index]['ranking_mt'] = int(data['mt'])
             except (ValueError, TypeError):
                 return jsonify({'error': 'mt must be an integer'}), 400
-        
+        if 'personal_mt' in data:
+            try:
+                players[index]['personal_mt'] = int(data['personal_mt'])
+            except (ValueError, TypeError):
+                return jsonify({'error': 'personal_mt must be an integer'}), 400
+
+        players[index] = normalize_player(players[index])
         save_players(players)
         logger.info(f"Updated player at index {index}")
         return jsonify(players[index])
