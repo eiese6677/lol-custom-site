@@ -109,6 +109,58 @@ th {
   background-color: #1a1a1a;
 }
 
+.tier-badge {
+  font-weight: bold;
+}
+
+.tier-default {
+  color: gold;
+}
+
+.tier-new {
+  color: #9ca3af;
+}
+
+.tier-iron {
+  color: #7f8c8d;
+}
+
+.tier-bronze {
+  color: #cd7f32;
+}
+
+.tier-silver {
+  color: #c0c0c0;
+}
+
+.tier-gold {
+  color: #ffd700;
+}
+
+.tier-platinum {
+  color: #2ecc71;
+}
+
+.tier-emerald {
+  color: #1abc9c;
+}
+
+.tier-diamond {
+  color: #3498db;
+}
+
+.tier-master {
+  color: #9b59b6;
+}
+
+.tier-grandmaster {
+  color: #e91e63;
+}
+
+.tier-challenger {
+  color: #ff6b6b;
+}
+
 /* Manage Controls */
 .manage-controls {
   display: flex;

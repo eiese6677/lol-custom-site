@@ -13,6 +13,24 @@ function getTotalMt(player) {
   return getRankingMt(player) + getPersonalMt(player);
 }
 
+function getTierClass(tier) {
+  const normalizedTier = String(tier || '').trim().toLowerCase();
+
+  if (normalizedTier.includes('아이언')) return 'tier-iron';
+  if (normalizedTier.includes('브론즈')) return 'tier-bronze';
+  if (normalizedTier.includes('실버')) return 'tier-silver';
+  if (normalizedTier.includes('골드')) return 'tier-gold';
+  if (normalizedTier.includes('플레')) return 'tier-platinum';
+  if (normalizedTier.includes('에메')) return 'tier-emerald';
+  if (normalizedTier.includes('다이아')) return 'tier-diamond';
+  if (normalizedTier.includes('마스터')) return 'tier-master';
+  if (normalizedTier.includes('그랜드') || normalizedTier.includes('grand')) return 'tier-grandmaster';
+  if (normalizedTier.includes('챌린저')) return 'tier-challenger';
+  if (normalizedTier.includes('신튜')) return 'tier-new';
+
+  return 'tier-default';
+}
+
 /**
  * Fetch all players from the API
  */
@@ -43,11 +61,12 @@ function renderRanking() {
 
   sortedPlayers.forEach((player, index) => {
     const rank = index + 1;
+    const tierClass = getTierClass(player.tier);
     const row = `
       <tr>
         <td>${rank}</td>
         <td>${escapeHtml(player.nickname)}</td>
-        <td>${escapeHtml(player.tier)}</td>
+        <td><span class="tier-badge ${tierClass}">${escapeHtml(player.tier)}</span></td>
         <td>${getTotalMt(player)}</td>
       </tr>
     `;
